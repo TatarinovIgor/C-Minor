@@ -15,6 +15,8 @@ public:
     bool rightStep();
     bool increment();
     bool decrement();
+    bool read_value();
+    bool write_value();
 };
 
 Compiler::Compiler(int dataBusLengthParam){
@@ -40,8 +42,8 @@ bool Compiler::leftStep(){
         currentPossition = dataBusLength;
     } else{
         currentPossition = currentPossition - 1;
-
     }
+    cout << "leftStep call";
     return true;
 }
 
@@ -51,40 +53,51 @@ bool Compiler::rightStep(){
     } else{
         currentPossition = currentPossition+ 1;
     }
+
+    cout << "rightStep call";
     return true;
 }
 
 bool Compiler::increment(){
+
+    cout << "increment";
     return true;
 }
 
 bool Compiler::decrement(){
+    cout << "decrement";
     return true;
 }
+
+bool Compiler::write_value(){
+    cout << "write_value";
+    return true;
+}
+
+
+bool Compiler::read_value(){
+    cout << "read_value";
+    return true;
+}
+
 int main() {
     Compiler compiler(256);
-    int inputValue;
+    char inputValue;
 
     while (true) {
         cin >> inputValue;
-        
-        switch (inputValue){
-        case 1:
-            compiler.leftStep();
-        case 2:
-            compiler.rightStep();
-        case 3:
-            compiler.increment();
-        case 4:
-            compiler.decrement();
-        case 5:
-
-        case 6:
-
-        case 7:
-
-        default:
-            break;
+        switch (inputValue) {
+            case '1':
+                compiler.leftStep();
+            case '2':
+                compiler.rightStep();
+            case '3':
+                compiler.increment();
+            case '4':
+                compiler.decrement();
+            default:
+                cout << "the end" << endl;
+                break;
         }
     }
 }
