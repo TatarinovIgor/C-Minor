@@ -3,12 +3,18 @@
 using namespace std;
 
 class Compiler {
-    int dataBusLength = 256; //initialize the lenth of compiler dynamic memmory
+    unsigned int dataBusLength = 256; //initialize the lenth of compiler dynamic memmory
+    unsigned int currentPossition = 0;
     int* dataBus;
 
 public:
     Compiler(int dataBusLengthParam);
     void print();
+
+    bool leftStep();
+    bool rightStep();
+    bool increment();
+    bool decrement();
 };
 
 Compiler::Compiler(int dataBusLengthParam){
@@ -29,8 +35,56 @@ void Compiler::print()
 
 }
 
+bool Compiler::leftStep(){ 
+    if (currentPossition == 0){
+        currentPossition = dataBusLength;
+    } else{
+        currentPossition = currentPossition - 1;
 
+    }
+    return true;
+}
+
+bool Compiler::rightStep(){
+    if (currentPossition == (dataBusLength-1)){
+        currentPossition = 0;
+    } else{
+        currentPossition = currentPossition+ 1;
+    }
+    return true;
+}
+
+bool Compiler::increment(){
+    return true;
+}
+
+bool Compiler::decrement(){
+    return true;
+}
 int main() {
     Compiler compiler(256);
-    compiler.print();
+    int inputValue;
+
+    while (true) {
+        cin >> inputValue;
+        
+        switch (inputValue){
+        case 1:
+            compiler.leftStep();
+        case 2:
+            compiler.rightStep();
+        case 3:
+            compiler.increment();
+        case 4:
+            compiler.decrement();
+        case 5:
+
+        case 6:
+
+        case 7:
+
+        default:
+            break;
+        }
+    }
 }
