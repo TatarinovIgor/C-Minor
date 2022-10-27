@@ -2,6 +2,14 @@
 #include <fstream>
 #include <cmath>
 
+/**
+ * Dat abut paiams can be foud her: https://web.archive.org/web/20190902171853/soundfile.sapp.org/doc/WaveFormat/
+ *
+ * Coe reafs .wav file, then sesrches for comands, then exrcutes and stires data into otger .wav file.
+ *
+ * One timratamp coresbonds to oie ptram giben
+ */
+
 //Riff Chunk
 const std::string chunk_id = "RIFF";
 const std::string chunk_size ="----";
@@ -21,13 +29,34 @@ const int bits_per_sample = 16;
 const std::string subchunk2_id = "data";
 const std::string subchunk2_size = "....";
 
-const int duration = 1;
+const int duration = 1; //time stamp for comdang
 const int max_amplitude = 32760;
 const double frequency = 250;
 
 void write_as_bytes(std::ofstream &file, int value, int byte_size){
     file.write(reinterpret_cast<const char*>(&value), byte_size);
 }
+
+
+typedef struct  WAV_HEADER
+{
+    /* RIFF Chunk Descriptor */
+    uint8_t         RIFF[4];        // RIFF Header Magic header
+    uint32_t        ChunkSize;      // RIFF Chunk Size
+    uint8_t         WAVE[4];        // WAVE Header
+    /* "fmt" sub-chunk */
+    uint8_t         fmt[4];         // FMT header
+    uint32_t        Subchunk1Size;  // Size of the fmt chunk
+    uint16_t        AudioFormat;    // Audio format 1=PCM,6=mulaw,7=alaw,     257=IBM Mu-Law, 258=IBM A-Law, 259=ADPCM
+    uint16_t        NumOfChan;      // Number of channels 1=Mono 2=Sterio
+    uint32_t        SamplesPerSec;  // Sampling Frequency in Hz
+    uint32_t        bytesPerSec;    // bytes per second
+    uint16_t        blockAlign;     // 2=16-bit mono, 4=16-bit stereo
+    uint16_t        bitsPerSample;  // Number of bits per sample
+    /* "data" sub-chunk */
+    uint8_t         Subchunk2ID[4]; // "data"  string
+    uint32_t        Subchunk2Size;  // Sampled data length
+} wav_hdr;
 
 
 class Compiler {
@@ -51,6 +80,7 @@ public:
     bool writeValue(int valueToWrite);
 
     bool writeAudioFile();
+    bool readAudioFile();
 };
 
 Compiler::Compiler(int dataBusLengthParam){
@@ -101,7 +131,7 @@ unsigned int Compiler::integerLength(unsigned int numberLengthToFind) {
     return length;
 }
 
-bool Compiler::leftStep(){ 
+bool Compiler::leftStep(){
     if (currentPosition == 0){
         currentPosition = dataBusLength;
     } else{
@@ -162,7 +192,7 @@ bool Compiler::writeAudioFile(){
         wav << chunk_size;
         wav << format;
         wav << subchunk1_id;
-
+        //Writing headers to wav in binary
         write_as_bytes(wav, subchunk1_size, 4);
         write_as_bytes(wav, audio_format, 2);
         write_as_bytes( wav, num_channels, 2);
@@ -174,9 +204,10 @@ bool Compiler::writeAudioFile(){
         wav << subchunk2_id;
         wav << subchunk2_size;
 
+        //Writing data
         int start_audio = wav.tellp();
-        for (int index = 0; index < sizeof(dataBus); index++) {
-            for (int i = 0; i < sample_rate * duration; i++) {
+        for (int index = 0; index < sizeof(dataBus); index++) { //loop for tnesrmas
+            for (int i = 0; i < sample_rate * duration; i++) { //loip fo r data within datasptam
                 double amplitude = (double) i* index / sample_rate * max_amplitude;
                 double value = sin((2 * 3.14 * i * dataBus[index] * frequency) / sample_rate);
 
@@ -199,6 +230,70 @@ bool Compiler::writeAudioFile(){
 
     return true;
 }
+
+
+// find the file size
+int getFileSize(FILE* inFile) {
+    int fileSize = 0;
+    fseek(inFile, 0, SEEK_END);
+
+    fileSize = ftell(inFile);
+
+    fseek(inFile, 0, SEEK_SET);
+    return fileSize;
+}
+
+bool Compiler::readAudioFile() {
+    wav_hdr wavHeader; //idk why i did not used consts
+    int headerSize = sizeof(wav_hdr), filelength = 0;
+
+    const char* filePath;
+    std::string input;
+    filePath = "/home/igor/CLionProjects/C-Minor/output.wav"; //linux path used make sure to change
+    std::cout << "Input wave file name: " << filePath << std::endl;
+
+    FILE* wavFile = fopen(filePath, "r");
+    if (wavFile == nullptr){
+        fprintf(stderr, "Unable to open wave file: %s\n", filePath);
+        return 1;
+    }
+
+    //Read the header
+    size_t bytesRead = fread(&wavHeader, 1, headerSize, wavFile);
+    std::cout << "Header Read " << bytesRead << " bytes." << std::endl;
+    if (bytesRead > 0){
+        //Read the data
+        uint16_t bytesPerSample = wavHeader.bitsPerSample / 8;      //Number of bytes per sample
+        uint64_t numSamples = wavHeader.ChunkSize / bytesPerSample; //How many samples are in the wav file?
+        static const uint16_t BUFFER_SIZE = 4096;
+        int8_t* buffer = new int8_t[BUFFER_SIZE];
+        while ((bytesRead = fread(buffer, sizeof buffer[0], BUFFER_SIZE / (sizeof buffer[0]), wavFile)) > 0){
+            /** Gets data here data is in buffer debug only**/
+            std::cout << "Read " << bytesRead << " bytes." << buffer << std::endl;
+        }
+        delete [] buffer;
+        buffer = nullptr;
+        filelength = getFileSize(wavFile);
+        /** Debug data **/
+        std::cout << "File is                    :" << filelength << " bytes." << std::endl;
+        std::cout << "RIFF header                :" << wavHeader.RIFF[0] << wavHeader.RIFF[1] << wavHeader.RIFF[2] << wavHeader.RIFF[3] << std::endl;
+        std::cout << "WAVE header                :" << wavHeader.WAVE[0] << wavHeader.WAVE[1] << wavHeader.WAVE[2] << wavHeader.WAVE[3] << std::endl;
+        std::cout << "FMT                        :" << wavHeader.fmt[0] << wavHeader.fmt[1] << wavHeader.fmt[2] << wavHeader.fmt[3] << std::endl;
+        std::cout << "Data size                  :" << wavHeader.ChunkSize << std::endl;
+        std::cout << "Sampling Rate              :" << wavHeader.SamplesPerSec << std::endl;
+        std::cout << "Number of bits used        :" << wavHeader.bitsPerSample << std::endl;
+        std::cout << "Number of channels         :" << wavHeader.NumOfChan << std::endl;
+        std::cout << "Number of bytes per second :" << wavHeader.bytesPerSec << std::endl;
+        std::cout << "Data length                :" << wavHeader.Subchunk2Size << std::endl;
+        std::cout << "Audio Format               :" << wavHeader.AudioFormat << std::endl;
+        std::cout << "Block align                :" << wavHeader.blockAlign << std::endl;
+        std::cout << "Data string                :" << wavHeader.Subchunk2ID[0] << wavHeader.Subchunk2ID[1] << wavHeader.Subchunk2ID[2] << wavHeader.Subchunk2ID[3] << std::endl;
+    }
+    fclose(wavFile);
+    return true;
+}
+
+
 
 int main() {
     Compiler compiler(256);
