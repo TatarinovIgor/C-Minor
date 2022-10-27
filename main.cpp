@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 //Riff Chunk
 const std::string chunk_id = "RIFF";
@@ -19,6 +20,10 @@ const int bits_per_sample = 16;
 // Data subchunk
 const std::string subchunk2_id = "data";
 const std::string subchunk2_size = "....";
+
+const int duration = 30;
+const int max_amplitude = 32760;
+const double frequency = 250;
 
 void write_as_bytes(std::ofstream &file, int value, int byte_size){
     file.write(reinterpret_cast<const char*>(&value), byte_size);
@@ -206,6 +211,18 @@ int main(){
 
         wav << subchunk2_id;
         wav << subchunk2_size;
+
+        for (int i = 0; i < sample_rate*duration; i++ ){
+            double amplitude = (double)i/sample_rate*max_amplitude;
+            double value = sin((2*3.14*i*frequency) / sample_rate);
+
+            double channel1 = amplitude * value;
+            double channel2 = (max_amplitude - amplitude) * value;
+
+            write_as_bytes(wav, int(channel1), 2);
+            write_as_bytes(wav, int(channel2), 2);
+
+        }
     }
     wav.close();
 
