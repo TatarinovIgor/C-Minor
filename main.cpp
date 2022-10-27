@@ -36,6 +36,7 @@ class Compiler {
     unsigned int maxValue = 127;
     unsigned int* dataBus;
 
+
 public:
     explicit Compiler(int dataBusLengthParam);
     void print();
@@ -49,6 +50,7 @@ public:
     bool readValue();
     bool writeValue(int valueToWrite);
 
+    bool writeAudioFile();
 };
 
 Compiler::Compiler(int dataBusLengthParam){
@@ -152,9 +154,9 @@ bool Compiler::readValue(){
     return true;
 }
 
-bool writeAudioFile(int data_to_write[7]){
+bool Compiler::writeAudioFile(){
     std::ofstream wav;
-    wav.open("/home/igor/CLionProjects/C-Minor/test.wav", std::ios::binary);
+    wav.open("/home/igor/CLionProjects/C-Minor/output.wav", std::ios::binary);
     if (wav.is_open()) {
         wav << chunk_id;
         wav << chunk_size;
@@ -173,10 +175,10 @@ bool writeAudioFile(int data_to_write[7]){
         wav << subchunk2_size;
 
         int start_audio = wav.tellp();
-        for (int index = 0; index < sizeof(data_to_write); index++) {
+        for (int index = 0; index < sizeof(dataBus); index++) {
             for (int i = 0; i < sample_rate * duration; i++) {
                 double amplitude = (double) i* index / sample_rate * max_amplitude;
-                double value = sin((2 * 3.14 * i * data_to_write[index] * frequency) / sample_rate);
+                double value = sin((2 * 3.14 * i * dataBus[index] * frequency) / sample_rate);
 
                 double channel1 = amplitude * value / 2;
                 double channel2 = (max_amplitude - amplitude) * value;
@@ -202,7 +204,6 @@ int main() {
     Compiler compiler(256);
     char inputValue;
     char charToInput;
-    /*
     while (true) {
         std::cin >> inputValue;
         switch (inputValue) {
@@ -233,17 +234,6 @@ int main() {
                 break;
         }
         compiler.print();
+        compiler.writeAudioFile();
     }
-     */
-
-    int values[7];
-    values[0] = 1;
-    values[1] = 1;
-    values[2] = 1;
-    values[3] = 1;
-    values[4] = 4;
-    values[5] = 3;
-    values[6] = 2;
-
-    writeAudioFile(values);
 }
