@@ -21,7 +21,7 @@ const int bits_per_sample = 16;
 const std::string subchunk2_id = "data";
 const std::string subchunk2_size = "....";
 
-const int duration = 30;
+const int duration = 1;
 const int max_amplitude = 32760;
 const double frequency = 250;
 
@@ -151,12 +151,58 @@ bool Compiler::readValue(){
 
     return true;
 }
-/*
+
+bool writeAudioFile(int data_to_write[7]){
+    std::ofstream wav;
+    wav.open("/home/igor/CLionProjects/C-Minor/test.wav", std::ios::binary);
+    if (wav.is_open()) {
+        wav << chunk_id;
+        wav << chunk_size;
+        wav << format;
+        wav << subchunk1_id;
+
+        write_as_bytes(wav, subchunk1_size, 4);
+        write_as_bytes(wav, audio_format, 2);
+        write_as_bytes( wav, num_channels, 2);
+        write_as_bytes(wav, sample_rate, 4);
+        write_as_bytes(wav, byte_rate, 4);
+        write_as_bytes(wav, block_align, 2);
+        write_as_bytes(wav, bits_per_sample, 2);
+
+        wav << subchunk2_id;
+        wav << subchunk2_size;
+
+        int start_audio = wav.tellp();
+        for (int index = 0; index < sizeof(data_to_write); index++) {
+            for (int i = 0; i < sample_rate * duration; i++) {
+                double amplitude = (double) i* index / sample_rate * max_amplitude;
+                double value = sin((2 * 3.14 * i * data_to_write[index] * frequency) / sample_rate);
+
+                double channel1 = amplitude * value / 2;
+                double channel2 = (max_amplitude - amplitude) * value;
+
+                write_as_bytes(wav, int(channel1), 2);
+                write_as_bytes(wav, int(channel2), 2);
+            }
+        }
+        int end_audio = wav.tellp();
+        wav.seekp(start_audio - 4);
+        write_as_bytes(wav, end_audio-start_audio, 4);
+        wav.seekp(4, std::ios::beg);
+        write_as_bytes(wav, end_audio - 8, 4);
+
+    }
+
+    wav.close();
+
+    return true;
+}
+
 int main() {
     Compiler compiler(256);
     char inputValue;
     char charToInput;
-
+    /*
     while (true) {
         std::cin >> inputValue;
         switch (inputValue) {
@@ -188,43 +234,16 @@ int main() {
         }
         compiler.print();
     }
-}
-*/
+     */
 
-int main(){
-    std::ofstream wav;
-    wav.open("/home/igor/CLionProjects/C-Minor/test.wav", std::ios::binary);
+    int values[7];
+    values[0] = 1;
+    values[1] = 1;
+    values[2] = 1;
+    values[3] = 1;
+    values[4] = 4;
+    values[5] = 3;
+    values[6] = 2;
 
-    if (wav.is_open()) {
-        wav << chunk_id;
-        wav << chunk_size;
-        wav << format;
-        wav << subchunk1_id;
-
-        write_as_bytes(wav, subchunk1_size, 4);
-        write_as_bytes(wav, audio_format, 2);
-        write_as_bytes( wav, num_channels, 2);
-        write_as_bytes(wav, sample_rate, 4);
-        write_as_bytes(wav, byte_rate, 4);
-        write_as_bytes(wav, block_align, 2);
-        write_as_bytes(wav, bits_per_sample, 2);
-
-        wav << subchunk2_id;
-        wav << subchunk2_size;
-
-        for (int i = 0; i < sample_rate*duration; i++ ){
-            double amplitude = (double)i/sample_rate*max_amplitude;
-            double value = sin((2*3.14*i*frequency) / sample_rate);
-
-            double channel1 = amplitude * value;
-            double channel2 = (max_amplitude - amplitude) * value;
-
-            write_as_bytes(wav, int(channel1), 2);
-            write_as_bytes(wav, int(channel2), 2);
-
-        }
-    }
-    wav.close();
-
-    return 0;
+    writeAudioFile(values);
 }
