@@ -64,6 +64,7 @@ class Compiler {
     unsigned int currentPosition = 0;
     unsigned int maxValue = 127;
     unsigned int* dataBus;
+    bool charInBin[];
 
 
 public:
@@ -81,6 +82,8 @@ public:
 
     bool writeAudioFile();
     bool readAudioFile();
+
+    void readBinData(int index);
 };
 
 Compiler::Compiler(int dataBusLengthParam){
@@ -115,8 +118,6 @@ void Compiler::print(){
     }
 
     std::cout << "^" << std::endl;
-    std::cout << currentPosition << std::endl;
-
     /* for (int u = 0; u < alternativeCountCursorPosition-2; u++){std::cout << " ";}*/ //Output last filled memory cell
 
 }
@@ -173,12 +174,11 @@ bool Compiler::decrement(){
 
 bool Compiler::writeValue(int valueToWrite){
     dataBus[currentPosition] = valueToWrite;
-    std::cout << "write_value" << valueToWrite << std::endl;
     return true;
 }
 
 bool Compiler::readValue(){
-    std::cout << "read_value" << std::endl;
+    std::cout << "read_value: " << std::endl;
     std::cout << dataBus[currentPosition] << std::endl;
 
     return true;
@@ -309,11 +309,38 @@ std::string readFile(){
             inputLine = inputLine + ch;
         }
     }
-    std::cout << inputLine;
     my_file.close();
     return inputLine;
 }
 
+void Compiler::readBinData(int index) {
+    bool dataSet[8];
+    int integerValue;
+    integerValue = 0;
+    std::string inputLine;
+    inputLine = readFile();
+    while (inputLine[index] != ']'){
+        if (inputLine[index] == '['){
+            index++;
+            for (int j = index; j<index+8; j++){
+                if (inputLine[j] == ':'){
+                    dataSet[j-index] = false;
+                } else if (inputLine[j] == ';'){
+                    dataSet[j-index] = true;
+                }
+            }
+        }
+        index++;
+    }
+    for (int u = 0; u < 8; u++){
+        charInBin[u] = dataSet[u];
+        if (charInBin[u]) {
+            integerValue += int(pow(2, (8-u)));
+        }
+    }
+    std::cout << integerValue << std::endl;
+    writeValue(integerValue/2);
+}
 
 int main() {
     Compiler compiler(256);
@@ -345,15 +372,28 @@ int main() {
                 index++;
                 continue;
             case '.':
-                compiler.writeValue(int(inputLine[index+1]));
-                index+=2;
+                compiler.readBinData(index+1);
+                //compiler.writeValue(int(inputLine[index+1]));
+                index+=1;
                 continue;
             case '^':
                 compiler.print();
                 index++;
                 continue;
+            case '[':
+                index++;
+                continue;
             case '8':
                 compiler.readAudioFile();
+                index++;
+                continue;
+            case ';':
+                index++;
+                continue;
+            case ':':
+                index++;
+                continue;
+            case ']':
                 index++;
                 continue;
             case '&':
