@@ -296,7 +296,7 @@ std::string readFile(){
     std::string inputLine;
     inputLine.clear();
 
-    my_file.open("/home/igor/CLionProjects/C-Minor/Full_Range.cmin", std::ios::in|std::ios::binary);
+    my_file.open("/home/igor/CLionProjects/C-Minor/test_projects/One_Note.cmin", std::ios::in|std::ios::binary);
     if (!my_file) {
         std::cout << "No such file";
     }
