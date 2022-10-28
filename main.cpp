@@ -29,7 +29,7 @@ const int bits_per_sample = 16;
 const std::string subchunk2_id = "data";
 const std::string subchunk2_size = "....";
 
-const int duration = 1; //time stamp for comdang
+const double duration = 3; //time stamp for comdang
 const int max_amplitude = 32760;
 const double frequency = 250;
 
@@ -60,7 +60,7 @@ typedef struct  WAV_HEADER
 
 
 class Compiler {
-    unsigned int dataBusLength = 256; //initialize the lenth of compiler dynamic memmory
+    unsigned int dataBusLength = 512; //initialize the lenth of compiler dynamic memmory
     unsigned int currentPosition = 0;
     unsigned int maxValue = 127;
     unsigned int* dataBus;
@@ -296,7 +296,7 @@ std::string readFile(){
     std::string inputLine;
     inputLine.clear();
 
-    my_file.open("/home/igor/CLionProjects/C-Minor/input.txt", std::ios::in);
+    my_file.open("/home/igor/CLionProjects/C-Minor/Full_Range.cmin", std::ios::in|std::ios::binary);
     if (!my_file) {
         std::cout << "No such file";
     }
