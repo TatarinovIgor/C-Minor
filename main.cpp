@@ -231,8 +231,6 @@ bool Compiler::writeAudioFile(){
     return true;
 }
 
-
-// find the file size
 int getFileSize(FILE* inFile) {
     int fileSize = 0;
     fseek(inFile, 0, SEEK_END);
@@ -250,12 +248,11 @@ bool Compiler::readAudioFile() {
     const char* filePath;
     std::string input;
     filePath = "/home/igor/CLionProjects/C-Minor/output.wav"; //linux path used make sure to change
-    std::cout << "Input wave file name: " << filePath << std::endl;
 
     FILE* wavFile = fopen(filePath, "r");
     if (wavFile == nullptr){
         fprintf(stderr, "Unable to open wave file: %s\n", filePath);
-        return 1;
+        return false;
     }
 
     //Read the header
@@ -267,9 +264,10 @@ bool Compiler::readAudioFile() {
         uint64_t numSamples = wavHeader.ChunkSize / bytesPerSample; //How many samples are in the wav file?
         static const uint16_t BUFFER_SIZE = 4096;
         int8_t* buffer = new int8_t[BUFFER_SIZE];
+
         while ((bytesRead = fread(buffer, sizeof buffer[0], BUFFER_SIZE / (sizeof buffer[0]), wavFile)) > 0){
             /** Gets data here data is in buffer debug only**/
-            std::cout << "Read " << bytesRead << " bytes." << buffer << std::endl;
+            std::cout << "Read " << bytesRead << " bytes. " << buffer << std::endl;
         }
         delete [] buffer;
         buffer = nullptr;
@@ -293,42 +291,76 @@ bool Compiler::readAudioFile() {
     return true;
 }
 
+std::string readFile(){
+    std::fstream my_file;
+    std::string inputLine;
+    inputLine.clear();
+
+    my_file.open("/home/igor/CLionProjects/C-Minor/input.txt", std::ios::in);
+    if (!my_file) {
+        std::cout << "No such file";
+    }
+    else {
+        char ch;
+        while (1) {
+            my_file >> ch;
+            if (my_file.eof())
+                break;
+            inputLine = inputLine + ch;
+        }
+    }
+    std::cout << inputLine;
+    my_file.close();
+    return inputLine;
+}
 
 
 int main() {
     Compiler compiler(256);
-    char inputValue;
-    char charToInput;
+    int index;
+    std::string inputLine;
+    inputLine = readFile();
+    index = 0;
+
     while (true) {
-        std::cin >> inputValue;
-        switch (inputValue) {
-            case '1':
+        switch (inputLine[index]) {
+            case '<':
                 compiler.leftStep();
+                index++;
                 continue;
-            case '2':
+            case '>':
                 compiler.rightStep();
+                index++;
                 continue;
-            case '3':
+            case '+':
                 compiler.increment();
+                index++;
                 continue;
-            case '4':
+            case '-':
                 compiler.decrement();
+                index++;
                 continue;
-            case '5':
+            case ',':
                 compiler.readValue();
+                index++;
                 continue;
-            case '6':
-                std::cin >> charToInput;
-                compiler.writeValue(int(charToInput));
+            case '.':
+                compiler.writeValue(int(inputLine[index+1]));
+                index+=2;
                 continue;
-            case '7':
+            case '^':
                 compiler.print();
+                index++;
                 continue;
-            default:
+            case '8':
+                compiler.readAudioFile();
+                index++;
+                continue;
+            case '&':
+                compiler.print();
+                compiler.writeAudioFile();
                 std::cout << "the end" << std::endl;
-                break;
+                return 0;
         }
-        compiler.print();
-        compiler.writeAudioFile();
     }
 }
